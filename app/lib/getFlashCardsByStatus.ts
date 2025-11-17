@@ -34,7 +34,7 @@ export async function getFlashCardsByStatus(
 
     return cards.map((card) => ({
       ...card,
-      status: "NOT_LEARNED",
+      status: "NOT_LEARNED" as "NOT_LEARNED" | "LEARNING" | "REVIEW" | "MASTERED",
     }));
   }
 
