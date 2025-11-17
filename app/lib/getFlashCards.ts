@@ -6,7 +6,7 @@ export async function getFlashCards() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
-    const cards = await prisma.FlashCard.findMany({
+    const cards = await prisma.flashCard.findMany({
       orderBy: { id: "asc" },
     });
     return cards.map(c => ({
@@ -20,7 +20,7 @@ export async function getFlashCards() {
 
   const userId = parseInt(session.user.id);
 
-  const cards = await prisma.FlashCard.findMany({
+  const cards = await prisma.flashCard.findMany({
     include: {
       userStatus: {
         where: { userId },

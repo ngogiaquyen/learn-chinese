@@ -3,13 +3,8 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import FlashCardForm from '@/app/components/FlashCardForm';
 import Link from 'next/link';
+import { FlashCardItem } from '@/app/types/flashCardItem';
 
-interface FlashCardItem {
-  id: number;
-  chinese: string;
-  pinyin: string;
-  meaning: string;
-}
 
 export default function EditFlashCardPage() {
   const { id } = useParams();

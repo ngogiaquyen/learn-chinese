@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const { flashcardId, status } = await req.json();
   const userId = parseInt(session.user.id);
 
-  await prisma.UserFlashcardStatus.upsert({
+  await prisma.userFlashcardStatus.upsert({
     where: { userId_flashcardId: { userId, flashcardId } },
     update: { status, lastReviewedAt: new Date() },
     create: { userId, flashcardId, status, lastReviewedAt: new Date() },
