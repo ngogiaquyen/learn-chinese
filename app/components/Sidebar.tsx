@@ -1,5 +1,7 @@
 "use client";
 import { useSession, signOut } from "next-auth/react";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function Sidebar({ isOpen, handleOpen }: { isOpen: boolean, handleOpen: () => void }) {
   const { data: session, status } = useSession();
@@ -14,7 +16,7 @@ export default function Sidebar({ isOpen, handleOpen }: { isOpen: boolean, handl
       {isOpen && (
         <div className="flex justify-between items-center gap-3 mb-10">
           <h1 className="text-2xl font-bold text-yellow-300">Flashcard App</h1>
-          <img
+          <Image
           onClick={handleOpen}
             className="w-10 h-10 object-contain"
             src="/images/wyn_rm.png"
@@ -24,11 +26,11 @@ export default function Sidebar({ isOpen, handleOpen }: { isOpen: boolean, handl
       )}
 
       <nav className="flex flex-col gap-4 text-lg">
-        <a href="/" className="hover:text-yellow-400">Home</a>
-        <a href="/chua-hoc" className="hover:text-yellow-400">chưa học</a>
-        <a href="/dang-hoc" className="hover:text-yellow-400">đang học</a>
-        <a href="/can-on-lai" className="hover:text-yellow-400">cần ôn lại</a>
-        <a href="/da-thuoc-long" className="hover:text-yellow-400">đã thuộc lòng</a>
+        <Link href="/" className="hover:text-yellow-400">Home</Link>
+        <Link href="/chua-hoc" className="hover:text-yellow-400">chưa học</Link>
+        <Link href="/dang-hoc" className="hover:text-yellow-400">đang học</Link>
+        <Link href="/can-on-lai" className="hover:text-yellow-400">cần ôn lại</Link>
+        <Link href="/da-thuoc-long" className="hover:text-yellow-400">đã thuộc lòng</Link>
       </nav>
 
       <div className="mt-auto">

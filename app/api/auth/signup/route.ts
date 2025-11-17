@@ -6,12 +6,13 @@ import bcrypt from "bcryptjs";
 export async function POST(req: NextRequest) {
   const { email, password, username } = await req.json();
 
-  const exists = await prisma.user.findUnique({ where: { email } });
+  const exists = await prisma.User.findUnique({ where: { email } });
+  
   if (exists) return NextResponse.json({ error: "Email đã tồn tại" }, { status: 400 });
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-  await prisma.user.create({
+  await prisma.User.create({
     data: { email, passwordHash, username },
   });
 

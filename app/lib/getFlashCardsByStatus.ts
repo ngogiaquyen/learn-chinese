@@ -12,7 +12,7 @@ export async function getFlashCardsByStatus(status: "NOT_LEARNED" | "LEARNING" |
 
   const userId = parseInt(session.user.id);
 
-  const cards = await prisma.flashCard.findMany({
+  const cards = await prisma.FlashCard.findMany({
     include: {
       userStatus: {
         where: { userId, status },
@@ -29,6 +29,6 @@ export async function getFlashCardsByStatus(status: "NOT_LEARNED" | "LEARNING" |
       chinese: card.chinese,
       pinyin: card.pinyin,
       meaning: card.meaning,
-      status: status as const,
+      status: status,
     }));
 }
