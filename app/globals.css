@@ -64,4 +64,5 @@ body {
 * {
   scrollbar-width: thin;
   scrollbar-color: #22d3ee #1a1a1a;
+  box-sizing: border-box;
 }

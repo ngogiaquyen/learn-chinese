@@ -47,7 +47,7 @@ export default function SidebarWrapper({ children }: { children: React.ReactNode
       {/* Nội dung chính – tự động dịch sang khi sidebar mở */}
       <main
         className={`
-          flex-1 min-h-screen transition-all duration-300 bg-gray-50
+          flex-1 max-h-screen transition-all duration-300
           ${isOpen ? "lg:ml-64" : "ml-0"}
         `}
       >

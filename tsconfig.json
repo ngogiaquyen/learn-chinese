@@ -30,6 +30,6 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts",
     "types"
-  ],
+, "app/components/SkeletonCard.tsx"  ],
   "exclude": ["node_modules"]
 }

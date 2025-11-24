@@ -9,11 +9,12 @@ export async function getFlashCards() {
     const cards = await prisma.flashCard.findMany({
       orderBy: { id: "asc" },
     });
-    return cards.map(c => ({
+    return cards.map((c) => ({
       id: c.id,
       chinese: c.chinese,
       pinyin: c.pinyin,
       meaning: c.meaning,
+      hskLevel: c.hskLevel,
       status: "NOT_LEARNED" as const,
     }));
   }
@@ -29,11 +30,12 @@ export async function getFlashCards() {
     orderBy: { id: "asc" },
   });
 
-  return cards.map(card => ({
+  return cards.map((card) => ({
     id: card.id,
     chinese: card.chinese,
     pinyin: card.pinyin,
     meaning: card.meaning,
-    status: (card.userStatus[0]?.status || "NOT_LEARNED"),
+    hskLevel: card.hskLevel,
+    status: card.userStatus[0]?.status || "NOT_LEARNED",
   }));
 }

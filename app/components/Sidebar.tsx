@@ -3,8 +3,9 @@ import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 
-// Khai báo NavLink bên ngoài Sidebar
+// NavLink ĐẸP HƠN – chỉ thay mỗi phần này
 function NavLink({
   href,
   label,
@@ -15,19 +16,39 @@ function NavLink({
   onClick: () => void;
 }) {
   const pathname = usePathname();
+  const isActive = pathname === href;
+
   return (
-    <Link
-      onClick={onClick}
-      href={href}
-      className={`hover:text-yellow-400 ${
-        pathname === href ? "text-yellow-400 font-bold" : ""
-      }`}
-    >
-      {label}
+    <Link href={href} onClick={onClick}>
+      <motion.div
+        whileHover={{ x: 10 }}
+        whileTap={{ scale: 0.95 }}
+        className={`relative px-5 py-3 rounded-xl overflow-hidden transition-all duration-300
+          ${isActive 
+            ? "text-yellow-400 font-bold bg-yellow-500/10 shadow-lg shadow-yellow-500/20" 
+            : "text-gray-300 hover:text-yellow-400 hover:bg-gray-800/60"
+          }`}
+      >
+        {/* Thanh active bên trái */}
+        {isActive && (
+          <motion.div
+            layoutId="activeNavPill"
+            className="absolute left-0 top-0 bottom-0 w-1.5 bg-yellow-400 rounded-r-full"
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          />
+        )}
+
+        {/* Nội dung */}
+        <span className="relative z-10 text-lg">{label}</span>
+
+        {/* Hiệu ứng hover glow */}
+        <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+      </motion.div>
     </Link>
   );
 }
 
+// Toàn bộ phần còn lại GIỮ NGUYÊN 100% như file gốc của bạn
 export default function Sidebar({
   isOpen,
   handleOpen,

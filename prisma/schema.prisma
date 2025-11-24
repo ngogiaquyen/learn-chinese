@@ -2,7 +2,7 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
   // shadowDatabaseUrl chỉ cần khi dùng prisma migrate dev ở môi trường có shadow db
-  // shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 generator client {
@@ -31,6 +31,7 @@ model FlashCard {
   chinese   String   // ← bỏ @db.VarChar(100)
   pinyin    String   // ← bỏ @db.VarChar(100)
   meaning   String   // ← bỏ @db.VarChar(255) luôn cho đẹp
+  hskLevel Int @default(0) @map("hsk_level")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

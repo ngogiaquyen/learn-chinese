@@ -11,7 +11,7 @@ export async function getFlashCardsByStatus(
     return [];
   }
 
-  console.log(status)
+  console.log(status);
 
   const userId = Number(session.user.id);
 
@@ -29,12 +29,17 @@ export async function getFlashCardsByStatus(
         chinese: true,
         pinyin: true,
         meaning: true,
+        hskLevel: true,
       },
     });
 
     return cards.map((card) => ({
       ...card,
-      status: "NOT_LEARNED" as "NOT_LEARNED" | "LEARNING" | "REVIEW" | "MASTERED",
+      status: "NOT_LEARNED" as
+        | "NOT_LEARNED"
+        | "LEARNING"
+        | "REVIEW"
+        | "MASTERED",
     }));
   }
 
@@ -49,6 +54,7 @@ export async function getFlashCardsByStatus(
           chinese: true,
           pinyin: true,
           meaning: true,
+          hskLevel: true,
         },
       },
     },
@@ -59,6 +65,7 @@ export async function getFlashCardsByStatus(
     chinese: s.flashcard.chinese,
     pinyin: s.flashcard.pinyin,
     meaning: s.flashcard.meaning,
+    hskLevel: s.flashcard.hskLevel,
     status: s.status as "NOT_LEARNED" | "LEARNING" | "REVIEW" | "MASTERED",
   }));
 }
