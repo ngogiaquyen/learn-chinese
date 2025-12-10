@@ -9,63 +9,202 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// 1. Bảng người dùng (bắt buộc nếu muốn mỗi user có tiến độ riêng)
+// ======================
+// 1. Người dùng
+// ======================
 model User {
-  id           Int      @id @default(autoincrement())
-  username     String?  @unique
-  email        String   @unique
-  passwordHash String
-  avatar       String?  // tùy chọn
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                Int      @id @default(autoincrement())
+  username          String?  @unique
+  email             String   @unique
+  passwordHash      String
+  avatar            String?
+  coins             Int      @default(2500)
+  streak            Int      @default(0)
+  lastLogin         DateTime?
+  totalLearnedWords Int      @default(0)
+  totalReviews      Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  // Quan hệ: một user có nhiều trạng thái flashcard
-  flashcardStatus UserFlashcardStatus[]
+  flashcardStatus   UserFlashcardStatus[]
+  items             UserItem[]
+  shopSettings      UserShopSettings?
+  transactions      Transaction[]
+  dailyReward       DailyReward?
+  achievements      UserAchievement[]
+  role Role @default(USER)
 
   @@map("users")
 }
 
-// 2. Bảng flashcard công khai (giữ nguyên như cũ, chỉ đổi tên model cho chuẩn)
+enum Role {
+  USER
+  ADMIN
+}
+
+// ======================
+// 2. Flashcard & Tiến độ học
+// ======================
 model FlashCard {
-  id        Int      @id @default(autoincrement())
-  chinese   String   // ← bỏ @db.VarChar(100)
-  pinyin    String   // ← bỏ @db.VarChar(100)
-  meaning   String   // ← bỏ @db.VarChar(255) luôn cho đẹp
-  hskLevel Int @default(0) @map("hsk_level")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         Int      @id @default(autoincrement())
+  chinese    String
+  pinyin     String
+  meaning    String
+  hskLevel   Int      @default(0) @map("hsk_level")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   userStatus UserFlashcardStatus[]
 
   @@map("FlashCard")
 }
 
-// 3. Bảng trạng thái học tập riêng của từng user (bảng quan trọng nhất!)
 model UserFlashcardStatus {
-  id              Int      @id @default(autoincrement())
-  userId          Int
-  flashcardId     Int
-  status          FlashcardStatus @default(NOT_LEARNED) // chưa học
-  lastReviewedAt  DateTime? // lần cuối học/ôn
-  nextReviewDue   DateTime? // ngày cần ôn lại (dùng cho Spaced Repetition)
-  reviewCount     Int      @default(0)
-  easeFactor      Float    @default(2.5)   // cho thuật toán SM-2 (nếu muốn nâng cao)
-  interval        Int      @default(0)     // số ngày giữa các lần ôn
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  flashcardId   Int
+  status        FlashcardStatus @default(NOT_LEARNED)
+  lastReviewedAt DateTime?
+  nextReviewDue DateTime?
+  reviewCount   Int      @default(0)
+  easeFactor    Float    @default(2.5)
+  interval      Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  // Đảm bảo 1 user chỉ có 1 bản ghi cho 1 flashcard
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  flashcard   FlashCard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flashcard FlashCard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
 
   @@unique([userId, flashcardId])
   @@map("user_flashcard_status")
 }
 
-// Enum trạng thái flashcard
 enum FlashcardStatus {
-  NOT_LEARNED   // chưa học
-  LEARNING      // đang học
-  REVIEW        // cần ôn lại
-  MASTERED      // đã thuộc lòng
+  NOT_LEARNED
+  LEARNING
+  REVIEW
+  MASTERED
+}
+
+// ======================
+// 3. Shop & Vật phẩm
+// ======================
+model ShopItem {
+  id          Int   @id @default(autoincrement())
+  name        String
+  price       Int
+  type        ShopItemType
+  image       String?    // ảnh preview
+  lottieUrl   String?    // chỉ dùng cho PET (URL file .json Lottie)
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userItems UserItem[]
+
+  @@map("shop_items")
+}
+
+enum ShopItemType {
+  PET
+  THEME
+  AVATAR
+  SKIN
+  MUSIC
+}
+
+model UserItem {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  itemId      Int
+  purchasedAt DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shopItem ShopItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemId])
+  @@map("user_items")
+}
+
+model UserShopSettings {
+  id           Int      @id @default(autoincrement())
+  userId       Int      @unique
+  activePet    Int?
+  activeAvatar Int?
+  activeTheme  Int?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_shop_settings")
+}
+
+// ======================
+// 4. Giao dịch xu
+// ======================
+model Transaction {
+  id          Int              @id @default(autoincrement())
+  userId      Int
+  type        TransactionType
+  amount      Int              // dương: nhận, âm: tiêu
+  itemId      Int?
+  description String?
+  createdAt   DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
+}
+
+enum TransactionType {
+  PURCHASE
+  REWARD
+  DAILY_LOGIN
+  BONUS
+  REFUND
+}
+
+// ======================
+// 5. Điểm danh hàng ngày
+// ======================
+model DailyReward {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  lastClaim DateTime?
+  streak    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("daily_rewards")
+}
+
+// ======================
+// 6. Thành tựu
+// ======================
+model Achievement {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String
+  icon        String?
+  condition   String?
+  points      Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  userAchievements UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  userId        Int
+  achievementId Int
+  unlockedAt    DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@id([userId, achievementId])
+  @@map("user_achievements")
 }

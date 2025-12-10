@@ -24,9 +24,10 @@ function NavLink({
         whileHover={{ x: 10 }}
         whileTap={{ scale: 0.95 }}
         className={`relative px-5 py-3 rounded-xl overflow-hidden transition-all duration-300
-          ${isActive 
-            ? "text-yellow-400 font-bold bg-yellow-500/10 shadow-lg shadow-yellow-500/20" 
-            : "text-gray-300 hover:text-yellow-400 hover:bg-gray-800/60"
+          ${
+            isActive
+              ? "text-yellow-400 font-bold bg-yellow-500/10 shadow-lg shadow-yellow-500/20"
+              : "text-gray-300 hover:text-yellow-400 hover:bg-gray-800/60"
           }`}
       >
         {/* Thanh active bên trái */}
@@ -57,6 +58,7 @@ export default function Sidebar({
   handleOpen: () => void;
 }) {
   const { data: session, status } = useSession();
+  const isAdmin = session?.user?.role === "ADMIN";
 
   return (
     <aside
@@ -88,6 +90,16 @@ export default function Sidebar({
           label="Đã thuộc lòng"
           onClick={handleOpen}
         />
+        <NavLink href="/shop" label="Shop" onClick={handleOpen} />
+        <NavLink href="/profile" label="Profile" onClick={handleOpen} />
+        {/* CHỈ HIỆN KHI LÀ ADMIN */}
+        {isAdmin && (
+          <>
+            <div className="my-4 h-px bg-gray-700" />{" "}
+            {/* đường kẻ phân cách đẹp */}
+            <NavLink href="/admin/shop" label="Quản trị" onClick={handleOpen} />
+          </>
+        )}
       </nav>
 
       <div className="mt-auto">
