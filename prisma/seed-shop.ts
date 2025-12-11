@@ -2,9 +2,8 @@
 // Chạy bằng lệnh: npx ts-node prisma/seed-shop.ts
 // Hoặc thêm vào package.json: "seed:shop": "ts-node prisma/seed-shop.ts"
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 
-const prisma = new PrismaClient();
 
 const shopItems = [
   // 9 Pet – tất cả đều có lottieUrl thật

@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { Coins, Sparkles, Loader2 } from "lucide-react";
 
 import ShopHeader from "../components/shop/ShopHeader";
 import ShopTabs from "../components/shop/ShopTabs";

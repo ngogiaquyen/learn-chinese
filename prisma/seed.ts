@@ -1,7 +1,6 @@
 // prisma/seed-hsk2.ts  (hoặc thay luôn vào seed.ts nếu bạn muốn chỉ có HSK 2)
+import prisma from '@/lib/prisma';
 import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
 
 const flashcards = [
   { chinese: '吧', pinyin: 'ba', meaning: 'nhé, chứ, đúng không', hskLevel: 2 },
