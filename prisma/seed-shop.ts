@@ -224,12 +224,10 @@ const shopItems = [
 ];
 
 async function main() {
-  console.log('Đang seed sản phẩm shop...');
   const result = await prisma.shopItem.createMany({
     data: shopItems,
     skipDuplicates: true,
   });
-  console.log(`Đã thêm thành công ${result.count} sản phẩm vào shop!`);
 }
 
 main()

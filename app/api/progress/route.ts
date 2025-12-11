@@ -6,7 +6,6 @@ import { authOptions } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  console.log("Session in /api/progress:", session);
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { flashcardId, status } = await req.json();

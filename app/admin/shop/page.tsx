@@ -27,9 +27,17 @@ function PetAnimation({ lottieUrl }: { lottieUrl?: string }) {
       .catch(() => setAnimationData(null));
   }, [lottieUrl]);
 
-  if (!animationData) return <div className="text-gray-500 text-sm">No animation</div>;
+  if (!animationData)
+    return <div className="text-gray-500 text-sm">No animation</div>;
 
-  return <Lottie animationData={animationData} loop autoplay className="w-full h-full" />;
+  return (
+    <Lottie
+      animationData={animationData}
+      loop
+      autoplay
+      className="w-full h-full"
+    />
+  );
 }
 
 export default function AdminShopPage() {
@@ -50,7 +58,11 @@ export default function AdminShopPage() {
       .catch(() => alert("Không tải được sản phẩm"));
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -77,11 +89,14 @@ export default function AdminShopPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.price || !formData.type) return alert("Vui lòng điền đầy đủ");
+    if (!formData.name || !formData.price || !formData.type)
+      return alert("Vui lòng điền đầy đủ");
 
     setActionLoading(true);
     const method = editingItem ? "PUT" : "POST";
-    const url = editingItem ? `/api/admin/shop/${editingItem.id}` : "/api/admin/shop";
+    const url = editingItem
+      ? `/api/admin/shop/${editingItem.id}`
+      : "/api/admin/shop";
 
     try {
       const res = await fetch(url, {
@@ -95,7 +110,9 @@ export default function AdminShopPage() {
       const newItem = await res.json();
 
       if (editingItem) {
-        setItems((prev) => prev.map((i) => (i.id === newItem.id ? newItem : i)));
+        setItems((prev) =>
+          prev.map((i) => (i.id === newItem.id ? newItem : i))
+        );
       } else {
         setItems((prev) => [...prev, newItem]);
       }
@@ -120,7 +137,8 @@ export default function AdminShopPage() {
     }
   };
 
-  if (loading) return <div className="text-center py-20 text-2xl">Đang tải...</div>;
+  if (loading)
+    return <div className="text-center py-20 text-2xl">Đang tải...</div>;
 
   return (
     <>
@@ -149,14 +167,23 @@ export default function AdminShopPage() {
                   <Image
                     src={item.image || "/placeholder.png"}
                     alt={item.name}
-                    className="w-full h-64 object-cover"
+                    width={400}
+                    height={256}
+                    className="w-full h-64 object-cover hover:scale-110 transition-transform duration-500"
+                    unoptimized
                   />
                 )}
 
                 <div className="p-6">
-                  <h3 className="text-xl font-bold text-yellow-300">{item.name}</h3>
-                  <p className="text-gray-400 text-sm mt-1 line-clamp-2">{item.description || "Không có mô tả"}</p>
-                  <p className="text-2xl font-bold text-yellow-400 mt-4">{item.price.toLocaleString()} xu</p>
+                  <h3 className="text-xl font-bold text-yellow-300">
+                    {item.name}
+                  </h3>
+                  <p className="text-gray-400 text-sm mt-1 line-clamp-2">
+                    {item.description || "Không có mô tả"}
+                  </p>
+                  <p className="text-2xl font-bold text-yellow-400 mt-4">
+                    {item.price.toLocaleString()} xu
+                  </p>
 
                   <div className="flex gap-3 mt-6">
                     <button
@@ -285,7 +312,11 @@ export default function AdminShopPage() {
                     disabled={actionLoading}
                     className="flex-1 bg-linear-to-r from-green-500 to-emerald-600 py-4 rounded-xl font-bold text-lg hover:from-green-600 hover:to-emerald-700 transition disabled:opacity-50"
                   >
-                    {actionLoading ? "Đang lưu..." : editingItem ? "Cập nhật" : "Thêm mới"}
+                    {actionLoading
+                      ? "Đang lưu..."
+                      : editingItem
+                      ? "Cập nhật"
+                      : "Thêm mới"}
                   </button>
                   <button
                     type="button"

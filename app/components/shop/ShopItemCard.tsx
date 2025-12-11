@@ -73,6 +73,7 @@ export default function ShopItemCard({
           <Image
             src={item.image}
             alt={item.name}
+            fill
             className="w-32 h-32 object-cover"
           />)
         )}

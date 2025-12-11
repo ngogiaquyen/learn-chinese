@@ -2,7 +2,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { Coins, Sparkles } from "lucide-react";
 
 import ShopHeader from "../components/shop/ShopHeader";
 import ShopTabs from "../components/shop/ShopTabs";
@@ -19,24 +20,20 @@ export default function ShopPage() {
   const [activePet, setActivePet] = useState<number | null>(null);
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [activeTab, setActiveTab] = useState<TabType>("PET");
+  const [loading, setLoading] = useState(true);
 
   const [confirmItem, setConfirmItem] = useState<{ id: number; price: number; name: string } | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  // Load dữ liệu từ API
   useEffect(() => {
     const loadData = async () => {
       const res = await fetch("/api/shop");
       if (res.ok) {
         const data = await res.json();
-        console.log(data);
         setCoins(data.coins);
-        setInventory(data.inventory);
+        setInventory(data.inventory || []);
         setActivePet(data.activePet);
-        console.log(data.activePet);
-        console.log(data.shopItems)
-        setShopItems(data.shopItems);
+        setShopItems(data.shopItems || []);
       }
       setLoading(false);
     };
@@ -46,18 +43,20 @@ export default function ShopPage() {
   const filteredItems = shopItems.filter((item) => item.type === activeTab);
 
   const buyItem = (id: number, price: number, name: string) => {
-    if (inventory.includes(id)) return alert("Bạn đã sở hữu vật phẩm này rồi!");
-    if (coins < price) return alert("Không đủ xu!");
+    if (inventory.includes(id)) {
+      alert("Bạn đã sở hữu vật phẩm này rồi!");
+      return;
+    }
+    if (coins < price) {
+      alert("Không đủ xu để mua!");
+      return;
+    }
     setConfirmItem({ id, price, name });
   };
 
   const confirmPurchase = async () => {
     if (!confirmItem) return;
-    console.log(JSON.stringify({
-        action: "buy",
-        itemId: confirmItem.id,
-        price: confirmItem.price,
-      }),)
+
     const res = await fetch("/api/shop", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -67,57 +66,100 @@ export default function ShopPage() {
         price: confirmItem.price,
       }),
     });
+
     if (res.ok) {
-      setCoins((prev) => prev - confirmItem.price);
+      const { coins: newCoins } = await res.json();
+      setCoins(newCoins ?? coins - confirmItem.price);
       setInventory((prev) => [...prev, confirmItem.id]);
-      if (confirmItem.id) setActivePet(confirmItem.id);
       setConfirmItem(null);
       setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2500);
+      setTimeout(() => setShowSuccess(false), 3000);
     } else {
       const err = await res.json();
-      alert(err.error || "Có lỗi xảy ra");
+      alert(err.error || "Mua thất bại!");
     }
   };
 
   const isOwned = (id: number) => inventory.includes(id);
 
   if (loading) {
-    return <div className="text-center py-20 text-xl">Đang tải cửa hàng...</div>;
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-2xl font-bold text-yellow-400 animate-pulse">
+          Đang tải cửa hàng ma thuật...
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="w-full min-h-screen bg-gray-900 text-gray-100 px-4 py-12 relative">
-      <div className="max-w-7xl mx-auto">
-        {/* <ShopHeader coins={coins} activePetAnimation={activePet ? shopItems.find((i) => i.id === activePet)?.lottieUrl : null} /> */}
-        <ShopHeader coins={coins} activePetAnimation={shopItems.find((item) => String(item.id) === String(activePet))?.lottieUrl ?? null}/>
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 text-gray-100">
+        <div className="relative overflow-hidden">
+          {/* Background hiệu ứng */}
+          <div className="absolute inset-0 bg-gradient-to-t from-purple-600/10 via-transparent to-transparent pointer-events-none" />
 
-        <ShopTabs activeTab={activeTab} onTabChange={setActiveTab} />
+          <div className="relative max-w-7xl mx-auto px-4 py-12">
+        
 
-        <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          <AnimatePresence mode="wait">
-            {filteredItems.map((item) => (
-              <ShopItemCard
-                key={item.id}
-                item={item}
-                isOwned={isOwned(item.id)}
-                onBuy={buyItem}
-                animationData={item.type === "PET" ? item.lottieUrl : undefined}
-              />
-            ))}
-          </AnimatePresence>
+            {/* Số xu + Pet đang dùng */}
+            <ShopHeader
+              coins={coins}
+              activePetAnimation={shopItems.find(i => i.id === activePet)?.lottieUrl ?? null}
+            />
+
+            {/* Tabs */}
+            <ShopTabs activeTab={activeTab} onTabChange={setActiveTab} />
+
+            {/* Danh sách item */}
+            <motion.div
+              layout
+              className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-12"
+            >
+              <AnimatePresence mode="popLayout">
+                {filteredItems.length === 0 ? (
+                  <div className="col-span-full text-center py-20">
+                    <p className="text-2xl text-gray-500">Chưa có sản phẩm nào trong mục này</p>
+                  </div>
+                ) : (
+                  filteredItems.map((item) => (
+                    <motion.div
+                      key={item.id}
+                      layout
+                      initial={{ opacity: 0, scale: 0.8, y: 50 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                      whileHover={{ y: -12 }}
+                      className="group"
+                    >
+                      <ShopItemCard
+                        item={item}
+                        isOwned={isOwned(item.id)}
+                        onBuy={buyItem}
+                        animationData={item.type === "PET" ? item.lottieUrl : undefined}
+                      />
+                    </motion.div>
+                  ))
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </div>
         </div>
+
+        {/* Modal xác nhận mua */}
+        <ShopConfirmModal
+          show={!!confirmItem}
+          onClose={() => setConfirmItem(null)}
+          onConfirm={confirmPurchase}
+          itemName={confirmItem?.name || ""}
+          price={confirmItem?.price || 0}
+        />
+
+        {/* Animation thành công */}
+        <ShopSuccessAnimation show={showSuccess} />
+
       </div>
-
-      <ShopConfirmModal
-        show={!!confirmItem}
-        onClose={() => setConfirmItem(null)}
-        onConfirm={confirmPurchase}
-        itemName={confirmItem?.name || ""}
-        price={confirmItem?.price || 0}
-      />
-
-      <ShopSuccessAnimation show={showSuccess} />
-    </div>
+    </>
   );
 }

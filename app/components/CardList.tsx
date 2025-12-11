@@ -18,7 +18,9 @@ const loadOpenLevels = (availableLevels: number[]): Set<number> => {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed)) {
-        const validLevels = parsed.filter((n): n is number => typeof n === "number");
+        const validLevels = parsed.filter(
+          (n): n is number => typeof n === "number"
+        );
         // Chỉ giữ lại những level thực sự tồn tại
         return new Set(validLevels.filter((l) => availableLevels.includes(l)));
       }
@@ -43,7 +45,9 @@ export default function CardList({ cards }: { cards: Card[] }) {
       return acc;
     }, {} as Record<number, Card[]>);
 
-    const levels = Object.keys(grouped).map(Number).sort((a, b) => a - b);
+    const levels = Object.keys(grouped)
+      .map(Number)
+      .sort((a, b) => a - b);
 
     return {
       grouped,
@@ -54,9 +58,11 @@ export default function CardList({ cards }: { cards: Card[] }) {
   }, [cards]);
 
   // Khởi tạo đúng 1 lần, đúng cách React 19 khuyến nghị
-  const [openLevels, setOpenLevels] = useState<Set<number>>(() =>
-    loadOpenLevels(levels)
-  );
+  const [openLevels, setOpenLevels] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    setOpenLevels(loadOpenLevels(levels));
+  }, [levels]);
 
   const [isMounted, setIsMounted] = useState(false);
 
@@ -67,7 +73,10 @@ export default function CardList({ cards }: { cards: Card[] }) {
     // Nếu lần đầu mở hết → lưu luôn để lần sau vẫn mở
     if (openLevels.size === levels.length && levels.length > 0) {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(openLevels)));
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify(Array.from(openLevels))
+        );
       } catch {}
     }
   }, [levels, openLevels.size]);
@@ -91,7 +100,9 @@ export default function CardList({ cards }: { cards: Card[] }) {
   };
 
   const toggleAll = () => {
-    setOpenLevels(openLevels.size === levels.length ? new Set() : new Set(levels));
+    setOpenLevels(
+      openLevels.size === levels.length ? new Set() : new Set(levels)
+    );
   };
 
   const allOpen = openLevels.size === levels.length;
@@ -100,10 +111,15 @@ export default function CardList({ cards }: { cards: Card[] }) {
   if (!isLoading && isEmpty) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-900 text-center">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
           <div className="text-6xl mb-6 text-gray-700">Empty</div>
           <p className="text-2xl text-gray-400 mb-2">Chưa có từ vựng nào</p>
-          <p className="text-lg text-gray-500">Hãy thêm từ HSK 1-6 để bắt đầu học nhé!</p>
+          <p className="text-lg text-gray-500">
+            Hãy thêm từ HSK 1-6 để bắt đầu học nhé!
+          </p>
         </motion.div>
       </div>
     );
@@ -176,7 +192,11 @@ export default function CardList({ cards }: { cards: Card[] }) {
                       <span className="text-sm opacity-70 group-hover:opacity-100">
                         {isOpen ? "Ẩn" : "Hiện"}
                       </span>
-                      {isOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                      {isOpen ? (
+                        <ChevronUp className="w-5 h-5" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5" />
+                      )}
                     </div>
                   </button>
 
@@ -199,7 +219,10 @@ export default function CardList({ cards }: { cards: Card[] }) {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.9 }}
-                                transition={{ delay: idx * 0.03, ease: "easeOut" }}
+                                transition={{
+                                  delay: idx * 0.03,
+                                  ease: "easeOut",
+                                }}
                                 className="flex justify-center"
                               >
                                 <FlashCard

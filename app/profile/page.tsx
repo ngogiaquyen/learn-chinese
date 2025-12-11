@@ -2,14 +2,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import Lottie from "lottie-react";
 import { ShopItem } from "@prisma/client";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
+
+import QRShowButton from "./components/QRShowButton";
+import QRScanButton from "./components/QRScanButton";
+import MyQRModal from "./components/MyQRModal";
+import ScanQRModal from "./components/ScanQRModal";
 
 type TabType = "PET" | "THEME" | "AVATAR" | "SKIN" | "MUSIC";
 
 export default function ProfilePage() {
+  const { data: session, status } = useSession();
   const [coins, setCoins] = useState(2500);
   const [inventory, setInventory] = useState<number[]>([]);
   const [activePet, setActivePet] = useState<number | null>(null);
@@ -17,50 +24,52 @@ export default function ProfilePage() {
   const [activeTheme, setActiveTheme] = useState<number | null>(null);
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [activeTab, setActiveTab] = useState<TabType>("PET");
-
   const [petAnimationData, setPetAnimationData] = useState<object | null>(null);
   const [isPetLoading, setIsPetLoading] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Load dữ liệu từ API
+  // Modal QR
+  const [showMyQR, setShowMyQR] = useState(false);
+  const [showScanQR, setShowScanQR] = useState(false);
+
+  // Lấy thông tin user từ session
+  const currentUser = session?.user
+    ? { id: Number(session.user.id), name: session.user.name || "Người chơi" }
+    : null;
+
   useEffect(() => {
+    if (status === "loading") return;
+
     const loadData = async () => {
       const res = await fetch("/api/shop");
       if (res.ok) {
         const data = await res.json();
-        setCoins(data.coins);
-        setInventory(data.inventory);
+        setCoins(data.coins || 0);
+        setInventory(data.inventory || []);
         setActivePet(data.activePet);
         setActiveAvatar(data.activeAvatar);
         setActiveTheme(data.activeTheme);
-        setShopItems(data.shopItems);
+        setShopItems(data.shopItems || []);
       }
       setLoading(false);
     };
     loadData();
-  }, []);
+  }, [status]);
 
-  // Load animation cho pet đang dùng (ở header)
+  // Load pet animation
   useEffect(() => {
-    if (!activePet) {
-      setPetAnimationData(null);
-      return;
-    }
-    const petItem = shopItems.find((i) => i.id === Number(activePet));
-    const url = petItem?.lottieUrl;
-    if (!url) return;
+    if (!activePet || shopItems.length) return;
+    const pet = shopItems.find(i => i.id === activePet);
+    if (!pet?.lottieUrl) return;
 
     setIsPetLoading(true);
-    console.log("header loading pet animation from URL:", url); 
-    fetch(url)
-      .then((res) => res.json())
-      .then((data) => setPetAnimationData(data))
-      .catch(() => setPetAnimationData(null))
+    fetch(pet.lottieUrl)
+      .then(r => r.json())
+      .then(setPetAnimationData)
       .finally(() => setIsPetLoading(false));
   }, [activePet, shopItems]);
 
   const changeActive = async (type: TabType, itemId: number) => {
-    const field = type === "PET" ? "activePet" : type === "AVATAR" ? "activeAvatar" : "activeTheme";
     const res = await fetch("/api/shop", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -73,141 +82,155 @@ export default function ProfilePage() {
     }
   };
 
-  const ownedItems = shopItems.filter((item) => inventory.includes(item.id) && item.type === activeTab);
+  const ownedItems = shopItems.filter(item => inventory.includes(item.id) && item.type === activeTab);
 
-  if (loading) return <div className="text-center py-20 text-xl">Đang tải kho đồ...</div>;
+  if (status === "loading" || loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 to-black flex items-center justify-center">
+        <p className="text-4xl font-bold text-yellow-400 animate-pulse">Đang tải kho đồ...</p>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return <div className="text-center py-20 text-2xl">Vui lòng đăng nhập</div>;
+  }
 
   return (
-    <div className="w-full min-h-screen bg-gray-900 text-gray-100 px-4 py-12 relative">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row items-center justify-between mb-12">
-          <h1 className="text-4xl font-bold mb-6 md:mb-0">Kho đồ của bạn</h1>
+    <div className="w-full min-h-screen bg-gradient-to-br from-gray-950 via-purple-900/30 to-black text-white">
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-10 mb-16">
+          <motion.h1
+            initial={{ opacity: 0, x: -100 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="text-7xl font-extrabold bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-600 bg-clip-text text-transparent"
+          >
+            Kho đồ của bạn
+          </motion.h1>
 
           <div className="flex items-center gap-8">
             {/* Pet đang dùng */}
-            <div className="relative">
-              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-indigo-500 shadow-lg shadow-indigo-500/50">
+            <div className="relative mb-6 lg:mb-0">
+              <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-indigo-500 shadow-2xl">
                 {isPetLoading ? (
-                  <div className="w-full h-full bg-gray-700 flex items-center justify-center text-gray-400 text-sm">Đang tải...</div>
+                  <div className="w-full h-full bg-gray-700 animate-pulse" />
                 ) : petAnimationData ? (
-                  <Lottie animationData={petAnimationData} loop autoplay style={{ width: "100%", height: "100%" }} />
+                  <Lottie animationData={petAnimationData} loop autoplay />
                 ) : (
-                  <div className="w-full h-full bg-gray-700 flex items-center justify-center text-gray-400 text-sm">Chưa có</div>
+                  <div className="w-full h-full bg-gray-700 flex items-center justify-center text-gray-400 text-sm">
+                    Chưa có pet
+                  </div>
                 )}
               </div>
-              <div className="absolute -bottom-2 -right-2 bg-green-600 text-xs font-bold px-3 py-1 rounded-full">
+              <div className="absolute -bottom-3 -right-3 bg-green-600 px-4 py-2 rounded-full text-sm font-bold shadow-lg">
                 Đang dùng
               </div>
             </div>
 
-            {/* Số xu */}
-            <div className="flex items-center gap-3 bg-yellow-600/20 px-6 py-3 rounded-full">
-              <span className="text-yellow-400 text-2xl font-bold">{coins.toLocaleString()}</span>
-              <span className="text-yellow-400">xu</span>
+            {/* Số xu + 2 nút QR */}
+            <div className="flex flex-col items-center gap-6">
+              <div className="bg-gradient-to-r from-yellow-600 to-orange-600 px-10 py-5 rounded-2xl shadow-2xl flex items-center gap-5 text-4xl font-bold">
+                <span>{coins.toLocaleString()}</span>
+                <span className="text-2xl">xu</span>
+              </div>
+
+              <div className="flex gap-6">
+                <QRShowButton onClick={() => setShowMyQR(true)} />
+                <QRScanButton onClick={() => setShowScanQR(true)} />
+              </div>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex flex-wrap gap-4 mb-10 border-b border-gray-700 pb-4">
-          {["PET", "AVATAR", "THEME", "SKIN", "MUSIC"].map((tab) => (
+        <div className="flex flex-wrap justify-center gap-6 mb-12">
+          {(["PET", "AVATAR", "THEME", "SKIN", "MUSIC"] as TabType[]).map(tab => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab as TabType)}
-              className={`px-6 py-3 rounded-full font-medium transition-all ${
-                activeTab === tab ? "bg-indigo-600 text-white" : "bg-gray-800 hover:bg-gray-700"
+              onClick={() => setActiveTab(tab)}
+              className={`px-10 py-4 rounded-2xl font-bold text-xl transition-all backdrop-blur border-2 ${
+                activeTab === tab
+                  ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-2xl"
+                  : "bg-gray-800/60 border-gray-700 hover:bg-gray-700"
               }`}
             >
-              {tab === "PET" ? "Pet" : tab === "AVATAR" ? "Avatar" : tab === "THEME" ? "Theme" : tab === "SKIN" ? "Skin" : "Nhạc"}
+              {tab === "PET" ? "Pet" : tab === "AVATAR" ? "Avatar" : tab === "THEME" ? "Chủ đề" : tab === "SKIN" ? "Skin" : "Nhạc"}
             </button>
           ))}
         </div>
 
-        {/* Danh sách item đã sở hữu */}
-        <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          <AnimatePresence mode="wait">
-            {ownedItems.length === 0 ? (
-              <div className="col-span-full text-center py-20 text-gray-500 text-xl">
-                Bạn chưa sở hữu item nào ở mục này.
-              </div>
-            ) : (
-              ownedItems.map((item) => {
-                const isPet = item.type === "PET";
-                const isActive =
-                  (item.type === "PET" && item.id === activePet) ||
-                  (item.type === "AVATAR" && item.id === activeAvatar) ||
-                  (item.type === "THEME" && item.id === activeTheme);
+        {/* Danh sách item */}
+        <div className="grid gap-10 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <AnimatePresence mode="popLayout">
+            {ownedItems.map(item => {
+              const isActive = 
+                (item.type === "PET" && item.id === activePet) ||
+                (item.type === "AVATAR" && item.id === activeAvatar) ||
+                (item.type === "THEME" && item.id === activeTheme);
 
-                // Component con để load Lottie riêng cho từng pet
-                const PetLottie = () => {
-                  const [animationData, setAnimationData] = useState<object | null>(null);
-                  const [isLoading, setIsLoading] = useState(false);
-
-                  useEffect(() => {
-                    if (!isPet || !item.lottieUrl) return;
-
-                    setIsLoading(true);
-                    fetch(item.lottieUrl)
-                      .then((res) => res.json())
-                      .then((data) => setAnimationData(data))
-                      .catch(() => setAnimationData(null))
-                      .finally(() => setIsLoading(false));
-                  }, [item.lottieUrl, isPet]);
-
-                  if (isLoading) {
-                    return <div className="w-full h-full bg-gray-700 flex items-center justify-center text-gray-400 text-sm">Đang tải...</div>;
-                  }
-
-                  if (!animationData) {
-                    return <div className="w-full h-full bg-gray-700 flex items-center justify-center text-gray-400 text-sm">Không có animation</div>;
-                  }
-
-                  return <Lottie animationData={animationData} loop autoplay style={{ width: "80%", height: "80%" }} />;
-                };
-
-                return (
-                  <div
-                    key={item.id}
-                    className="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300"
-                  >
-                    <div className="relative h-40 bg-gray-900 flex items-center justify-center">
-                      {isPet && item.lottieUrl ? (
-                        <PetLottie />
-                      ) : (
-                        <Image src={item.image} alt={item.name} className="w-32 h-32 object-cover rounded-full" />
-                      )}
-
-                      {isActive && (
-                        <div className="absolute top-2 right-2 bg-green-600 px-3 py-1 rounded-full text-xs font-bold">
-                          Đang dùng
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="p-4">
-                      <h3 className="text-lg font-bold">{item.name}</h3>
-                      <p className="text-sm text-gray-400 mt-1">{item.description}</p>
-
-                      <div className="mt-4 flex items-center justify-between">
-                        {isActive ? (
-                          <span className="text-green-400 font-medium">Đang sử dụng</span>
-                        ) : (
-                          <button
-                            onClick={() => changeActive(item.type as TabType, item.id)}
-                            className="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-full text-sm font-medium transition"
-                          >
-                            Sử dụng
-                          </button>
-                        )}
+              return (
+                <motion.div
+                  key={item.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  whileHover={{ y: -15 }}
+                  className="bg-gray-800/70 backdrop-blur border border-gray-700 rounded-3xl overflow-hidden shadow-2xl hover:shadow-purple-600/40 transition-all"
+                >
+                  {/* Ảnh hoặc Lottie */}
+                  <div className="h-64 bg-gray-900 flex items-center justify-center relative">
+                    {item.type === "PET" && item.lottieUrl ? (
+                      <LottiePreview lottieUrl={item.lottieUrl} />
+                    ) : (
+                      <Image
+                        src={item.image || "/placeholder.png"}
+                        alt={item.name}
+                        width={256}
+                        height={256}
+                        className="w-48 h-48 object-cover rounded-2xl"
+                      />
+                    )}
+                    {isActive && (
+                      <div className="absolute top-4 right-4 bg-green-600 px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2">
+                        Đang dùng
                       </div>
-                    </div>
+                    )}
                   </div>
-                );
-              })
-            )}
+
+                  <div className="p-6 text-center">
+                    <h3 className="text-2xl font-bold mb-2">{item.name}</h3>
+                    <p className="text-gray-400 text-sm mb-6">{item.description || "Không có mô tả"}</p>
+                    {!isActive && (
+                      <button
+                        onClick={() => changeActive(item.type as TabType, item.id)}
+                        className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 px-8 py-4 rounded-2xl font-bold text-lg"
+                      >
+                        Sử dụng
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
           </AnimatePresence>
         </div>
       </div>
+
+      {/* 2 Modal QR */}
+      <MyQRModal isOpen={showMyQR} onClose={() => setShowMyQR(false)} user={currentUser} />
+      <ScanQRModal isOpen={showScanQR} onClose={() => setShowScanQR(false)} />
     </div>
   );
+}
+
+// Component nhỏ preview Lottie
+function LottiePreview({ lottieUrl }: { lottieUrl: string }) {
+  const [data, setData] = useState<object | null>(null);
+  useEffect(() => {
+    fetch(lottieUrl).then(r => r.json()).then(setData);
+  }, [lottieUrl]);
+  if (!data) return <div className="w-48 h-48 bg-gray-700 rounded-2xl animate-pulse" />;
+  return <Lottie animationData={data} loop autoplay style={{ width: 200, height: 200 }} />;
 }

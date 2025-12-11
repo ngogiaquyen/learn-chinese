@@ -11,8 +11,6 @@ export async function getFlashCardsByStatus(
     return [];
   }
 
-  console.log(status);
-
   const userId = Number(session.user.id);
 
   if (status === "NOT_LEARNED") {

@@ -1,8 +1,7 @@
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
-  // shadowDatabaseUrl chỉ cần khi dùng prisma migrate dev ở môi trường có shadow db
-  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  // shadowDatabaseUrl = env("SHADOW_DATABASE_URL") // chỉ cần khi dùng migrate dev với shadow db
 }
 
 generator client {
@@ -13,26 +12,29 @@ generator client {
 // 1. Người dùng
 // ======================
 model User {
-  id                Int      @id @default(autoincrement())
-  username          String?  @unique
-  email             String   @unique
-  passwordHash      String
-  avatar            String?
-  coins             Int      @default(2500)
-  streak            Int      @default(0)
-  lastLogin         DateTime?
-  totalLearnedWords Int      @default(0)
-  totalReviews      Int      @default(0)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                  Int                    @id @default(autoincrement())
+  username            String?                @unique
+  email               String                 @unique
+  passwordHash        String
+  avatar              String?
+  coins               Int                    @default(2500)
+  streak              Int                    @default(0)
+  lastLogin           DateTime?
+  totalLearnedWords   Int                    @default(0)
+  totalReviews        Int                    @default(0)
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  role                Role                   @default(USER)
 
-  flashcardStatus   UserFlashcardStatus[]
-  items             UserItem[]
-  shopSettings      UserShopSettings?
-  transactions      Transaction[]
-  dailyReward       DailyReward?
-  achievements      UserAchievement[]
-  role Role @default(USER)
+  // Quan hệ
+  flashcardStatus     UserFlashcardStatus[]
+  items               UserItem[]
+  shopSettings        UserShopSettings?
+  transactions        Transaction[]          // giao dịch của chính user (userId)
+  transactionsFrom    Transaction[]          @relation("FromUser")   // user là người gửi
+  transactionsTo      Transaction[]          @relation("ToUser")     // user là người nhận
+  dailyReward         DailyReward?
+  achievements        UserAchievement[]
 
   @@map("users")
 }
@@ -46,34 +48,34 @@ enum Role {
 // 2. Flashcard & Tiến độ học
 // ======================
 model FlashCard {
-  id         Int      @id @default(autoincrement())
-  chinese    String
-  pinyin     String
-  meaning    String
-  hskLevel   Int      @default(0) @map("hsk_level")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          Int                     @id @default(autoincrement())
+  chinese     String
+  pinyin      String
+  meaning     String
+  hskLevel    Int                     @default(0) @map("hsk_level")
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
 
-  userStatus UserFlashcardStatus[]
+  userStatus  UserFlashcardStatus[]
 
   @@map("FlashCard")
 }
 
 model UserFlashcardStatus {
-  id            Int      @id @default(autoincrement())
-  userId        Int
-  flashcardId   Int
-  status        FlashcardStatus @default(NOT_LEARNED)
-  lastReviewedAt DateTime?
-  nextReviewDue DateTime?
-  reviewCount   Int      @default(0)
-  easeFactor    Float    @default(2.5)
-  interval      Int      @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              Int             @id @default(autoincrement())
+  userId          Int
+  flashcardId     Int
+  status          FlashcardStatus @default(NOT_LEARNED)
+  lastReviewedAt  DateTime?
+  nextReviewDue   DateTime?
+  reviewCount     Int             @default(0)
+  easeFactor      Float           @default(2.5)
+  interval        Int             @default(0)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  flashcard FlashCard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flashcard   FlashCard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
 
   @@unique([userId, flashcardId])
   @@map("user_flashcard_status")
@@ -90,18 +92,19 @@ enum FlashcardStatus {
 // 3. Shop & Vật phẩm
 // ======================
 model ShopItem {
-  id          Int   @id @default(autoincrement())
+  id          Int           @id @default(autoincrement())
   name        String
   price       Int
   type        ShopItemType
-  image       String    // ảnh preview
-  lottieUrl   String?    // chỉ dùng cho PET (URL file .json Lottie)
+  image       String
+  lottieUrl   String?
   description String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
-  userItems UserItem[]
+  userItems   UserItem[]
+  transactions Transaction[]   // thêm quan hệ ngược lại
 
   @@map("shop_items")
 }
@@ -115,21 +118,21 @@ enum ShopItemType {
 }
 
 model UserItem {
-  id          Int      @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   userId      Int
   itemId      Int
-  purchasedAt DateTime @default(now())
+  purchasedAt DateTime    @default(now())
 
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shopItem ShopItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shopItem    ShopItem  @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
   @@unique([userId, itemId])
   @@map("user_items")
 }
 
 model UserShopSettings {
-  id           Int      @id @default(autoincrement())
-  userId       Int      @unique
+  id           Int   @id @default(autoincrement())
+  userId       Int   @unique
   activePet    Int?
   activeAvatar Int?
   activeTheme  Int?
@@ -142,38 +145,51 @@ model UserShopSettings {
 // ======================
 // 4. Giao dịch xu
 // ======================
-model Transaction {
-  id          Int              @id @default(autoincrement())
-  userId      Int
-  type        TransactionType
-  amount      Int              // dương: nhận, âm: tiêu
-  itemId      Int?
-  description String?
-  createdAt   DateTime         @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("transactions")
-}
-
 enum TransactionType {
   PURCHASE
+  SELL
   REWARD
   DAILY_LOGIN
   BONUS
   REFUND
+  ADMIN_GIFT
+  LEVEL_UP
+  TRANSFER_OUT
+  TRANSFER_IN
+}
+
+model Transaction {
+  id          Int             @id @default(autoincrement())
+  userId      Int
+  type        TransactionType
+  amount      Int
+  itemId      Int?
+  fromUserId  Int?
+  toUserId    Int?
+  description String
+  createdAt   DateTime        @default(now())
+
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fromUser    User?           @relation("FromUser", fields: [fromUserId], references: [id])
+  toUser      User?           @relation("ToUser", fields: [toUserId], references: [id])
+  item        ShopItem?       @relation(fields: [itemId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([type])
+  @@index([fromUserId])
+  @@index([toUserId])
 }
 
 // ======================
 // 5. Điểm danh hàng ngày
 // ======================
 model DailyReward {
-  id        Int      @id @default(autoincrement())
-  userId    Int      @unique
-  lastClaim DateTime?
-  streak    Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         Int       @id @default(autoincrement())
+  userId     Int       @unique
+  lastClaim  DateTime?
+  streak     Int       @default(0)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -184,13 +200,13 @@ model DailyReward {
 // 6. Thành tựu
 // ======================
 model Achievement {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String
-  icon        String?
-  condition   String?
-  points      Int      @default(0)
-  createdAt   DateTime @default(now())
+  id              Int                 @id @default(autoincrement())
+  name            String
+  description     String
+  icon            String?
+  condition       String?
+  points          Int                 @default(0)
+  createdAt       DateTime            @default(now())
 
   userAchievements UserAchievement[]
 

@@ -18,7 +18,6 @@ export default function ShopHeader({ coins, activePetAnimation }: ShopHeaderProp
       return;
     }
 
-    console.log("Loading pet animation from URL:", activePetAnimation);
     const loadAnimation = async () => {
       try {
         const res = await fetch(activePetAnimation);
