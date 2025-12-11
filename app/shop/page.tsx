@@ -1,16 +1,16 @@
-// app/shop/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Coins, Sparkles } from "lucide-react";
+import { Coins, Sparkles, Loader2 } from "lucide-react";
 
 import ShopHeader from "../components/shop/ShopHeader";
 import ShopTabs from "../components/shop/ShopTabs";
 import ShopItemCard from "../components/shop/ShopItemCard";
-import ShopConfirmModal from "../components/shop/ShopConfirmModal";
 import ShopSuccessAnimation from "../components/shop/ShopSuccessAnimation";
 import { ShopItem } from "@prisma/client";
+import ItemGridList from "../components/shop/ItemGridList";
+import { ShopConfirmModal } from "../components/shop/ShopConfirmModal";
 
 type TabType = "PET" | "THEME" | "AVATAR" | "SKIN" | "MUSIC";
 
@@ -22,8 +22,13 @@ export default function ShopPage() {
   const [activeTab, setActiveTab] = useState<TabType>("PET");
   const [loading, setLoading] = useState(true);
 
-  const [confirmItem, setConfirmItem] = useState<{ id: number; price: number; name: string } | null>(null);
+  const [confirmItem, setConfirmItem] = useState<{
+    id: number;
+    price: number;
+    name: string;
+  } | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -55,28 +60,32 @@ export default function ShopPage() {
   };
 
   const confirmPurchase = async () => {
-    if (!confirmItem) return;
+    if (!confirmItem || processing) return;
+    try {
+      setProcessing(true);
+      const res = await fetch("/api/shop", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "buy",
+          itemId: confirmItem.id,
+          price: confirmItem.price,
+        }),
+      });
 
-    const res = await fetch("/api/shop", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "buy",
-        itemId: confirmItem.id,
-        price: confirmItem.price,
-      }),
-    });
-
-    if (res.ok) {
-      const { coins: newCoins } = await res.json();
-      setCoins(newCoins ?? coins - confirmItem.price);
-      setInventory((prev) => [...prev, confirmItem.id]);
-      setConfirmItem(null);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
-    } else {
-      const err = await res.json();
-      alert(err.error || "Mua thất bại!");
+      if (res.ok) {
+        const { coins: newCoins } = await res.json();
+        setCoins(newCoins ?? coins - confirmItem.price);
+        setInventory((prev) => [...prev, confirmItem.id]);
+        setConfirmItem(null);
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000);
+      } else {
+        const err = await res.json();
+        alert(err.error || "Mua thất bại!");
+      }
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -100,50 +109,31 @@ export default function ShopPage() {
           <div className="absolute inset-0 bg-gradient-to-t from-purple-600/10 via-transparent to-transparent pointer-events-none" />
 
           <div className="relative max-w-7xl mx-auto px-4 py-12">
-        
-
             {/* Số xu + Pet đang dùng */}
             <ShopHeader
+              title="Cửa hàng ma thuật"
               coins={coins}
-              activePetAnimation={shopItems.find(i => i.id === activePet)?.lottieUrl ?? null}
+              activeLottieUrl={
+                shopItems.find((i) => i.id === activePet)?.lottieUrl ?? null
+              }
             />
 
             {/* Tabs */}
             <ShopTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
             {/* Danh sách item */}
-            <motion.div
-              layout
-              className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-12"
-            >
-              <AnimatePresence mode="popLayout">
-                {filteredItems.length === 0 ? (
-                  <div className="col-span-full text-center py-20">
-                    <p className="text-2xl text-gray-500">Chưa có sản phẩm nào trong mục này</p>
-                  </div>
-                ) : (
-                  filteredItems.map((item) => (
-                    <motion.div
-                      key={item.id}
-                      layout
-                      initial={{ opacity: 0, scale: 0.8, y: 50 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                      whileHover={{ y: -12 }}
-                      className="group"
-                    >
-                      <ShopItemCard
-                        item={item}
-                        isOwned={isOwned(item.id)}
-                        onBuy={buyItem}
-                        animationData={item.type === "PET" ? item.lottieUrl : undefined}
-                      />
-                    </motion.div>
-                  ))
-                )}
-              </AnimatePresence>
-            </motion.div>
+            <ItemGridList
+              items={filteredItems}
+              columns={{ base: 1, sm: 2, lg: 3, xl: 4 }}
+              emptyMessage="Chưa có sản phẩm nào trong mục này"
+              renderItem={(item) => (
+                <ShopItemCard
+                  item={item}
+                  isOwned={isOwned(item.id)}
+                  onBuy={buyItem}
+                />
+              )}
+            />
           </div>
         </div>
 
@@ -154,11 +144,11 @@ export default function ShopPage() {
           onConfirm={confirmPurchase}
           itemName={confirmItem?.name || ""}
           price={confirmItem?.price || 0}
+          processing={processing}
         />
 
         {/* Animation thành công */}
         <ShopSuccessAnimation show={showSuccess} />
-
       </div>
     </>
   );

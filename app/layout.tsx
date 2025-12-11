@@ -8,13 +8,17 @@ export const metadata: Metadata = {
   description: "Học tiếng Trung hiệu quả",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="vi">
       <body className="bg-gray-900 text-white">
-        <Providers>
-          <SidebarWrapper>{children}</SidebarWrapper>
-        </Providers>
+          <Providers>
+            <SidebarWrapper>{children}</SidebarWrapper>
+          </Providers>
       </body>
     </html>
   );

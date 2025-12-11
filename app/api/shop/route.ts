@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/db";
+import prisma from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -51,6 +51,19 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { action, itemId, toUserId, amount } = body;
 
+  // NEW: LẤY LẠI SỐ XU HIỆN TẠI (siêu nhanh, dùng cho realtime)
+  if (action === "getCoins") {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { coins: true },
+    });
+
+    return NextResponse.json({
+      success: true,
+      coins: user?.coins ?? 0,
+    });
+  }
+
   // ================== MUA ITEM ==================
   if (action === "buy") {
     const { price } = body;
@@ -60,14 +73,20 @@ export async function POST(req: NextRequest) {
 
     const item = await prisma.shopItem.findUnique({ where: { id: itemId } });
     if (!item || item.price !== price) {
-      return NextResponse.json({ error: "Vật phẩm không hợp lệ" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Vật phẩm không hợp lệ" },
+        { status: 400 }
+      );
     }
 
     const existing = await prisma.userItem.findUnique({
       where: { userId_itemId: { userId, itemId } },
     });
     if (existing) {
-      return NextResponse.json({ error: "Bạn đã sở hữu vật phẩm này!" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Bạn đã sở hữu vật phẩm này!" },
+        { status: 400 }
+      );
     }
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -105,17 +124,28 @@ export async function POST(req: NextRequest) {
     }
 
     const item = await prisma.shopItem.findUnique({ where: { id: itemId } });
-    if (!item) return NextResponse.json({ error: "Không tìm thấy vật phẩm" }, { status: 404 });
+    if (!item)
+      return NextResponse.json(
+        { error: "Không tìm thấy vật phẩm" },
+        { status: 404 }
+      );
 
     const owned = await prisma.userItem.findUnique({
       where: { userId_itemId: { userId, itemId } },
     });
     if (!owned) {
-      return NextResponse.json({ error: "Bạn chưa sở hữu vật phẩm này" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Bạn chưa sở hữu vật phẩm này" },
+        { status: 400 }
+      );
     }
 
     const field =
-      type === "pet" ? "activePet" : type === "avatar" ? "activeAvatar" : "activeTheme";
+      type === "pet"
+        ? "activePet"
+        : type === "avatar"
+        ? "activeAvatar"
+        : "activeTheme";
 
     await prisma.userShopSettings.upsert({
       where: { userId },
@@ -134,14 +164,20 @@ export async function POST(req: NextRequest) {
 
     const item = await prisma.shopItem.findUnique({ where: { id: itemId } });
     if (!item) {
-      return NextResponse.json({ error: "Vật phẩm không tồn tại" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Vật phẩm không tồn tại" },
+        { status: 404 }
+      );
     }
 
     const owned = await prisma.userItem.findUnique({
       where: { userId_itemId: { userId, itemId } },
     });
     if (!owned) {
-      return NextResponse.json({ error: "Bạn không sở hữu vật phẩm này" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Bạn không sở hữu vật phẩm này" },
+        { status: 400 }
+      );
     }
 
     const refundAmount = Math.floor(item.price * 0.7);
@@ -156,7 +192,9 @@ export async function POST(req: NextRequest) {
         data: { coins: { increment: refundAmount } },
       });
 
-      const settings = await tx.userShopSettings.findUnique({ where: { userId } });
+      const settings = await tx.userShopSettings.findUnique({
+        where: { userId },
+      });
       if (settings) {
         const updates: any = {};
         if (settings.activePet === itemId) updates.activePet = null;
@@ -189,26 +227,40 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       coins: updatedUser?.coins ?? 0,
-      message: `Đã bán "${item.name}" và nhận ${refundAmount.toLocaleString()} xu`,
+      message: `Đã bán "${
+        item.name
+      }" và nhận ${refundAmount.toLocaleString()} xu`,
     });
   }
 
   // ================== CHUYỂN XU (TRANSFER) ==================
   if (action === "transfer") {
     if (!toUserId || !amount || Number(amount) <= 0) {
-      return NextResponse.json({ error: "Thiếu hoặc số xu không hợp lệ" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Thiếu hoặc số xu không hợp lệ" },
+        { status: 400 }
+      );
     }
 
     const recipientId = Number(toUserId);
     const transferAmount = Number(amount);
 
     if (recipientId === userId) {
-      return NextResponse.json({ error: "Không thể chuyển cho chính mình" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Không thể chuyển cho chính mình" },
+        { status: 400 }
+      );
     }
 
     if (isNaN(recipientId) || isNaN(transferAmount)) {
-      return NextResponse.json({ error: "Dữ liệu không hợp lệ" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Dữ liệu không hợp lệ" },
+        { status: 400 }
+      );
     }
+
+    let senderUsername = "";
+    let recipientUsername = "";
 
     await prisma.$transaction(async (tx) => {
       // Kiểm tra người gửi
@@ -223,7 +275,7 @@ export async function POST(req: NextRequest) {
       // Kiểm tra người nhận
       const recipient = await tx.user.findUnique({
         where: { id: recipientId },
-        select: { username: true },
+        select: { username: true, coins: true },
       });
       if (!recipient) {
         throw new Error("Người nhận không tồn tại");
@@ -248,7 +300,7 @@ export async function POST(req: NextRequest) {
           type: "TRANSFER_OUT",
           amount: -transferAmount,
           toUserId: recipientId,
-          description: `Chuyển ${transferAmount.toLocaleString()} xu cho ${recipient.username}`,
+          description: `Chuyển ${transferAmount.toLocaleString()} xu cho ${recipientUsername}`,
         },
       });
 
@@ -259,12 +311,12 @@ export async function POST(req: NextRequest) {
           type: "TRANSFER_IN",
           amount: transferAmount,
           fromUserId: userId,
-          description: `Nhận ${transferAmount.toLocaleString()} xu từ ${sender.username}`,
+          description: `Nhận ${transferAmount.toLocaleString()} xu từ ${senderUsername}`,
         },
       });
     });
 
-    // Lấy lại số xu mới của người gửi để trả về client
+    // Lấy lại số xu mới của người gửi
     const updatedSender = await prisma.user.findUnique({
       where: { id: userId },
       select: { coins: true },
@@ -278,5 +330,8 @@ export async function POST(req: NextRequest) {
   }
 
   // ================== ACTION KHÔNG HỢP LỆ ==================
-  return NextResponse.json({ error: "Hành động không hợp lệ" }, { status: 400 });
+  return NextResponse.json(
+    { error: "Hành động không hợp lệ" },
+    { status: 400 }
+  );
 }

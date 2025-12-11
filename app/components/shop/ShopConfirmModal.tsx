@@ -1,17 +1,20 @@
 import { motion, AnimatePresence } from "framer-motion";
+import { Loader2 } from "lucide-react";
 
-export default function ShopConfirmModal({
+export function ShopConfirmModal({
   show,
   onClose,
   onConfirm,
   itemName,
   price,
+  processing,
 }: {
   show: boolean;
   onClose: () => void;
   onConfirm: () => void;
   itemName: string;
   price: number;
+  processing?: boolean;
 }) {
   return (
     <AnimatePresence>
@@ -30,21 +33,30 @@ export default function ShopConfirmModal({
           >
             <h3 className="text-2xl font-bold text-white mb-4">Xác nhận mua</h3>
             <p className="text-gray-300 mb-6">
-              Bạn muốn mua <span className="text-indigo-400 font-bold">{itemName}</span> với{" "}
+              Bạn muốn mua{" "}
+              <span className="text-indigo-400 font-bold">{itemName}</span> với{" "}
               <span className="text-yellow-400 font-bold">{price} xu</span>?
             </p>
             <div className="flex gap-4">
               <button
                 onClick={onClose}
-                className="flex-1 py-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition"
+                disabled={processing}
+                className="flex-1 py-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition disabled:opacity-50"
               >
                 Hủy
               </button>
               <button
                 onClick={onConfirm}
-                className="flex-1 py-3 bg-indigo-600 rounded-lg hover:bg-indigo-500 transition font-bold"
+                disabled={processing}
+                className="flex-1 py-3 bg-indigo-600 rounded-lg hover:bg-indigo-500 transition font-bold disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                Mua ngay
+                {processing ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" /> Đang xử lý...
+                  </>
+                ) : (
+                  "Mua ngay"
+                )}
               </button>
             </div>
           </motion.div>
