@@ -248,7 +248,7 @@ export async function POST(req: NextRequest) {
           type: "TRANSFER_OUT",
           amount: -transferAmount,
           toUserId: recipientId,
-          description: `Chuyển ${transferAmount.toLocaleString()} xu cho ${recipient.name}`,
+          description: `Chuyển ${transferAmount.toLocaleString()} xu cho ${recipient.username}`,
         },
       });
 
