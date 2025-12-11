@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
-import Lottie from "lottie-react";
 
 import ShopHeader from "../components/shop/ShopHeader";
 import ShopTabs from "../components/shop/ShopTabs";

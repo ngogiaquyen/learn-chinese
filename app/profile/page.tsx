@@ -4,16 +4,18 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import Lottie from "lottie-react";
+import { ShopItem } from "@prisma/client";
+import Image from "next/image";
 
 type TabType = "PET" | "THEME" | "AVATAR" | "SKIN" | "MUSIC";
 
 export default function ProfilePage() {
   const [coins, setCoins] = useState(2500);
-  const [inventory, setInventory] = useState<string[]>([]);
-  const [activePet, setActivePet] = useState<string | null>(null);
-  const [activeAvatar, setActiveAvatar] = useState<string | null>(null);
-  const [activeTheme, setActiveTheme] = useState<string | null>(null);
-  const [shopItems, setShopItems] = useState<any[]>([]);
+  const [inventory, setInventory] = useState<number[]>([]);
+  const [activePet, setActivePet] = useState<number | null>(null);
+  const [activeAvatar, setActiveAvatar] = useState<number | null>(null);
+  const [activeTheme, setActiveTheme] = useState<number | null>(null);
+  const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [activeTab, setActiveTab] = useState<TabType>("PET");
 
   const [petAnimationData, setPetAnimationData] = useState<object | null>(null);
@@ -44,7 +46,7 @@ export default function ProfilePage() {
       setPetAnimationData(null);
       return;
     }
-    const petItem = shopItems.find((i) => i.id === activePet);
+    const petItem = shopItems.find((i) => i.id === Number(activePet));
     const url = petItem?.lottieUrl;
     if (!url) return;
 
@@ -57,7 +59,7 @@ export default function ProfilePage() {
       .finally(() => setIsPetLoading(false));
   }, [activePet, shopItems]);
 
-  const changeActive = async (type: TabType, itemId: string) => {
+  const changeActive = async (type: TabType, itemId: number) => {
     const field = type === "PET" ? "activePet" : type === "AVATAR" ? "activeAvatar" : "activeTheme";
     const res = await fetch("/api/shop", {
       method: "POST",
@@ -172,7 +174,7 @@ export default function ProfilePage() {
                       {isPet && item.lottieUrl ? (
                         <PetLottie />
                       ) : (
-                        <img src={item.image} alt={item.name} className="w-32 h-32 object-cover rounded-full" />
+                        <Image src={item.image} alt={item.name} className="w-32 h-32 object-cover rounded-full" />
                       )}
 
                       {isActive && (

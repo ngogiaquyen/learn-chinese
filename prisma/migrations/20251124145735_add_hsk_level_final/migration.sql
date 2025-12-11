@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `FlashCard` ADD COLUMN `hsk_level` INTEGER NOT NULL DEFAULT 0;

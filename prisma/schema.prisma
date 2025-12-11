@@ -94,7 +94,7 @@ model ShopItem {
   name        String
   price       Int
   type        ShopItemType
-  image       String?    // ảnh preview
+  image       String    // ảnh preview
   lottieUrl   String?    // chỉ dùng cho PET (URL file .json Lottie)
   description String?
   isActive    Boolean  @default(true)
