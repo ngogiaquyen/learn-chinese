@@ -9,7 +9,6 @@ const prisma = new PrismaClient();
 const shopItems = [
   // 9 Pet – tất cả đều có lottieUrl thật
   {
-    id: 'pet-dragon',
     name: 'Rồng con',
     price: 500,
     type: 'PET' as const,
@@ -18,7 +17,6 @@ const shopItems = [
     description: 'Người bạn rồng dễ thương',
   },
   {
-    id: 'pet-panda',
     name: 'Panda béo',
     price: 450,
     type: 'PET' as const,
@@ -27,7 +25,6 @@ const shopItems = [
     description: 'Panda mũm mĩm thích ăn bánh bao',
   },
   {
-    id: 'pet-cat',
     name: 'Mèo Thần Tài',
     price: 400,
     type: 'PET' as const,
@@ -36,7 +33,6 @@ const shopItems = [
     description: 'Vẫy tay mang tài lộc',
   },
   {
-    id: 'pet-fox',
     name: 'Cáo Hồ Ly cute',
     price: 480,
     type: 'PET' as const,
@@ -45,7 +41,6 @@ const shopItems = [
     description: 'Cáo tinh nghịch, thông minh',
   },
   {
-    id: 'pet-totoro',
     name: 'Totoro đáng yêu',
     price: 550,
     type: 'PET' as const,
@@ -54,7 +49,6 @@ const shopItems = [
     description: 'Totoro hiền lành, thích đi dạo',
   },
   {
-    id: 'pet-running-cat',
     name: 'Mèo chạy nhanh',
     price: 420,
     type: 'PET' as const,
@@ -63,7 +57,6 @@ const shopItems = [
     description: 'Mèo năng động, thích chạy nhảy',
   },
   {
-    id: 'pet-lunar-panda',
     name: 'Panda Tết Nguyên Đán',
     price: 480,
     type: 'PET' as const,
@@ -72,7 +65,6 @@ const shopItems = [
     description: 'Panda phiên bản Tết cực kỳ dễ thương',
   },
   {
-    id: 'pet-yay',
     name: 'Cậu bé nhảy vui',
     price: 380,
     type: 'PET' as const,
@@ -81,7 +73,6 @@ const shopItems = [
     description: 'Nhảy nhót vui vẻ, tràn đầy năng lượng',
   },
   {
-    id: 'pet-lego',
     name: 'Lego vui nhộn',
     price: 520,
     type: 'PET' as const,
@@ -92,7 +83,6 @@ const shopItems = [
 
   // Theme
   {
-    id: 'theme-tet',
     name: 'Theme Tết Trung Quốc',
     price: 300,
     type: 'THEME' as const,
@@ -100,7 +90,6 @@ const shopItems = [
     description: 'Đỏ rực, đèn lồng, hoa mai',
   },
   {
-    id: 'theme-ancient',
     name: 'Theme Cổ Trang',
     price: 350,
     type: 'THEME' as const,
@@ -110,7 +99,6 @@ const shopItems = [
 
   // Avatar
   {
-    id: 'avatar-dragon',
     name: 'Avatar Rồng Vàng',
     price: 200,
     type: 'AVATAR' as const,
@@ -118,7 +106,6 @@ const shopItems = [
     description: 'Huy hiệu rồng uy nghiêm',
   },
   {
-    id: 'avatar-panda',
     name: 'Avatar Panda',
     price: 180,
     type: 'AVATAR' as const,
@@ -128,7 +115,6 @@ const shopItems = [
 
   // Skin
   {
-    id: 'skin-dragon-gold',
     name: 'Skin Rồng Vàng',
     price: 250,
     type: 'SKIN' as const,
@@ -136,7 +122,6 @@ const shopItems = [
     description: 'Dành cho pet rồng',
   },
   {
-    id: 'skin-panda-red',
     name: 'Skin Panda Đỏ',
     price: 220,
     type: 'SKIN' as const,
@@ -146,7 +131,6 @@ const shopItems = [
 
   // Music
   {
-    id: 'music-chinese',
     name: 'Nhạc Trung Quốc cổ điển',
     price: 150,
     type: 'MUSIC' as const,
@@ -154,7 +138,6 @@ const shopItems = [
     description: 'Nhạc đàn tranh, sáo trúc',
   },
   {
-    id: 'music-lofi',
     name: 'Lofi Trung Quốc chill',
     price: 120,
     type: 'MUSIC' as const,
@@ -162,7 +145,6 @@ const shopItems = [
     description: 'Nhạc chill học bài',
   },
   {
-    id: 'music-epic',
     name: 'Nhạc phim cổ trang',
     price: 180,
     type: 'MUSIC' as const,
@@ -171,7 +153,6 @@ const shopItems = [
   },
   // THEME
   {
-    id: 'theme-tet',
     name: 'Theme Tết Trung Quốc',
     price: 300,
     type: 'THEME' as const,
@@ -179,7 +160,6 @@ const shopItems = [
     description: 'Đỏ rực, đèn lồng, hoa mai',
   },
   {
-    id: 'theme-ancient',
     name: 'Theme Cổ Trang',
     price: 350,
     type: 'THEME' as const,
@@ -189,7 +169,6 @@ const shopItems = [
 
   // AVATAR
   {
-    id: 'avatar-dragon',
     name: 'Avatar Rồng Vàng',
     price: 200,
     type: 'AVATAR' as const,
@@ -197,7 +176,6 @@ const shopItems = [
     description: 'Huy hiệu rồng uy nghiêm',
   },
   {
-    id: 'avatar-panda',
     name: 'Avatar Panda',
     price: 180,
     type: 'AVATAR' as const,
@@ -207,7 +185,6 @@ const shopItems = [
 
   // SKIN
   {
-    id: 'skin-dragon-gold',
     name: 'Skin Rồng Vàng',
     price: 250,
     type: 'SKIN' as const,
@@ -215,7 +192,6 @@ const shopItems = [
     description: 'Dành cho pet rồng',
   },
   {
-    id: 'skin-panda-red',
     name: 'Skin Panda Đỏ',
     price: 220,
     type: 'SKIN' as const,
@@ -225,7 +201,6 @@ const shopItems = [
 
   // MUSIC
   {
-    id: 'music-chinese',
     name: 'Nhạc Trung Quốc cổ điển',
     price: 150,
     type: 'MUSIC' as const,
@@ -233,7 +208,6 @@ const shopItems = [
     description: 'Nhạc đàn tranh, sáo trúc',
   },
   {
-    id: 'music-lofi',
     name: 'Lofi Trung Quốc chill',
     price: 120,
     type: 'MUSIC' as const,
@@ -241,7 +215,6 @@ const shopItems = [
     description: 'Nhạc chill học bài',
   },
   {
-    id: 'music-epic',
     name: 'Nhạc phim cổ trang',
     price: 180,
     type: 'MUSIC' as const,

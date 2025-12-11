@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   const userId = Number(session.user.id);
 
   const [settings, ownedItems, shopItems] = await Promise.all([
-    prisma.user_shop_settings.findUnique({
+    prisma.userShopSettings.findUnique({
       where: { userId },
       select: { activePet: true, activeAvatar: true, activeTheme: true },
     }),
