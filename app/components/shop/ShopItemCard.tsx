@@ -2,25 +2,26 @@
 
 import { useEffect, useState } from "react";
 import Lottie from "lottie-react";
-import { a } from "framer-motion/client";
+import Image from "next/image";
 
 type ShopItem = {
-  id: string;
+  id: number;
   name: string;
   price: number;
   type: string;
-  image: string;
-  description: string;
+  image: string | null; 
+  lottieUrl: string | null;
+  description: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 };
-
 type ShopItemCardProps = {
   item: ShopItem;
   isOwned: boolean;
-  onBuy: (id: string, price: number, name: string) => void;
+  onBuy: (id: number, price: number, name: string) => void;
   animationData?: string | null; // URL string
 };
-
-
 
 export default function ShopItemCard({
   item,
@@ -31,26 +32,24 @@ export default function ShopItemCard({
   const [lottieData, setLottieData] = useState<object | null>(null);
 
   useEffect(() => {
-
     if (!animationData) {
       setLottieData(null);
       return;
     }
-    
 
-      const loadAnimation = async () => {
-        try {
-          const res = await fetch(animationData);
-          if (!res.ok) throw new Error("Không tải được animation");
-          const data = await res.json();
-          setLottieData(data);
-        } catch (err) {
-          console.error("Lỗi tải animation:", err);
-          setLottieData(null);
-        }
-      };
+    const loadAnimation = async () => {
+      try {
+        const res = await fetch(animationData);
+        if (!res.ok) throw new Error("Không tải được animation");
+        const data = await res.json();
+        setLottieData(data);
+      } catch (err) {
+        console.error("Lỗi tải animation:", err);
+        setLottieData(null);
+      }
+    };
 
-      loadAnimation();
+    loadAnimation();
   }, [animationData]);
 
   return (
@@ -65,14 +64,17 @@ export default function ShopItemCard({
               style={{ width: "80%", height: "80%" }}
             />
           ) : (
-            <div className="text-gray-500 animate-pulse">Đang tải animation...</div>
+            <div className="text-gray-500 animate-pulse">
+              Đang tải animation...
+            </div>
           )
         ) : (
-          <img
+          item.image && (
+          <Image
             src={item.image}
             alt={item.name}
             className="w-32 h-32 object-cover"
-          />
+          />)
         )}
       </div>
 

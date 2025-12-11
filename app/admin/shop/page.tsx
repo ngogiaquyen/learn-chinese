@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Save, X, ChevronLeft } from "lucide-react";
+import { Plus, Edit, Trash2, X } from "lucide-react";
 import Lottie from "lottie-react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 type ShopItem = {
   id: number;
@@ -125,7 +126,7 @@ export default function AdminShopPage() {
     <>
       <div className="min-h-screen bg-gray-950 text-white px-6 py-12">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-5xl font-bold text-center mb-12 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+          <h1 className="text-5xl font-bold text-center mb-12 bg-linear-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
             Quản lý Shop
           </h1>
 
@@ -145,7 +146,7 @@ export default function AdminShopPage() {
                     <PetAnimation lottieUrl={item.lottieUrl} />
                   </div>
                 ) : (
-                  <img
+                  <Image
                     src={item.image || "/placeholder.png"}
                     alt={item.name}
                     className="w-full h-64 object-cover"
@@ -178,7 +179,7 @@ export default function AdminShopPage() {
 
           {items.length === 0 && (
             <div className="text-center py-20 text-gray-500 text-xl">
-              Chưa có sản phẩm nào. Bấm nút "+" để thêm nhé!
+              Chưa có sản phẩm nào. Bấm nút + để thêm nhé!
             </div>
           )}
         </div>
@@ -189,7 +190,7 @@ export default function AdminShopPage() {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => openForm()}
-        className="fixed bottom-8 right-8 z-50 bg-gradient-to-r from-purple-600 to-pink-600 text-white p-5 rounded-full shadow-2xl shadow-purple-500/50"
+        className="fixed bottom-8 right-8 z-50 bg-linear-to-r from-purple-600 to-pink-600 text-white p-5 rounded-full shadow-2xl shadow-purple-500/50"
       >
         <Plus className="w-8 h-8" />
       </motion.button>
@@ -282,7 +283,7 @@ export default function AdminShopPage() {
                   <button
                     type="submit"
                     disabled={actionLoading}
-                    className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 py-4 rounded-xl font-bold text-lg hover:from-green-600 hover:to-emerald-700 transition disabled:opacity-50"
+                    className="flex-1 bg-linear-to-r from-green-500 to-emerald-600 py-4 rounded-xl font-bold text-lg hover:from-green-600 hover:to-emerald-700 transition disabled:opacity-50"
                   >
                     {actionLoading ? "Đang lưu..." : editingItem ? "Cập nhật" : "Thêm mới"}
                   </button>

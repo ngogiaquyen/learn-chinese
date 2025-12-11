@@ -10,17 +10,18 @@ import ShopTabs from "../components/shop/ShopTabs";
 import ShopItemCard from "../components/shop/ShopItemCard";
 import ShopConfirmModal from "../components/shop/ShopConfirmModal";
 import ShopSuccessAnimation from "../components/shop/ShopSuccessAnimation";
+import { ShopItem } from "@prisma/client";
 
 type TabType = "PET" | "THEME" | "AVATAR" | "SKIN" | "MUSIC";
 
 export default function ShopPage() {
   const [coins, setCoins] = useState(2500);
-  const [inventory, setInventory] = useState<string[]>([]);
-  const [activePet, setActivePet] = useState<string | null>(null);
-  const [shopItems, setShopItems] = useState<any[]>([]);
+  const [inventory, setInventory] = useState<number[]>([]);
+  const [activePet, setActivePet] = useState<number | null>(null);
+  const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [activeTab, setActiveTab] = useState<TabType>("PET");
 
-  const [confirmItem, setConfirmItem] = useState<{ id: string; price: number; name: string } | null>(null);
+  const [confirmItem, setConfirmItem] = useState<{ id: number; price: number; name: string } | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -34,6 +35,8 @@ export default function ShopPage() {
         setCoins(data.coins);
         setInventory(data.inventory);
         setActivePet(data.activePet);
+        console.log(data.activePet);
+        console.log(data.shopItems)
         setShopItems(data.shopItems);
       }
       setLoading(false);
@@ -43,7 +46,7 @@ export default function ShopPage() {
 
   const filteredItems = shopItems.filter((item) => item.type === activeTab);
 
-  const buyItem = (id: string, price: number, name: string) => {
+  const buyItem = (id: number, price: number, name: string) => {
     if (inventory.includes(id)) return alert("Bạn đã sở hữu vật phẩm này rồi!");
     if (coins < price) return alert("Không đủ xu!");
     setConfirmItem({ id, price, name });
@@ -78,7 +81,7 @@ export default function ShopPage() {
     }
   };
 
-  const isOwned = (id: string) => inventory.includes(id);
+  const isOwned = (id: number) => inventory.includes(id);
 
   if (loading) {
     return <div className="text-center py-20 text-xl">Đang tải cửa hàng...</div>;
@@ -87,9 +90,10 @@ export default function ShopPage() {
   return (
     <div className="w-full min-h-screen bg-gray-900 text-gray-100 px-4 py-12 relative">
       <div className="max-w-7xl mx-auto">
-        <ShopHeader coins={coins} activePetAnimation={activePet ? shopItems.find((i) => i.id === activePet)?.lottieUrl : null} />
+        {/* <ShopHeader coins={coins} activePetAnimation={activePet ? shopItems.find((i) => i.id === activePet)?.lottieUrl : null} /> */}
+        <ShopHeader coins={coins} activePetAnimation={shopItems.find((item) => String(item.id) === String(activePet))?.lottieUrl ?? null}/>
 
-        <ShopTabs activeTab={activeTab} onTabChange={setActiveTab as any} />
+        <ShopTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
         <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <AnimatePresence mode="wait">
