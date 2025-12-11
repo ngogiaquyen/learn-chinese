@@ -234,100 +234,92 @@ export async function POST(req: NextRequest) {
   }
 
   // ================== CHUYỂN XU (TRANSFER) ==================
-  if (action === "transfer") {
-    if (!toUserId || !amount || Number(amount) <= 0) {
-      return NextResponse.json(
-        { error: "Thiếu hoặc số xu không hợp lệ" },
-        { status: 400 }
-      );
-    }
-
-    const recipientId = Number(toUserId);
-    const transferAmount = Number(amount);
-
-    if (recipientId === userId) {
-      return NextResponse.json(
-        { error: "Không thể chuyển cho chính mình" },
-        { status: 400 }
-      );
-    }
-
-    if (isNaN(recipientId) || isNaN(transferAmount)) {
-      return NextResponse.json(
-        { error: "Dữ liệu không hợp lệ" },
-        { status: 400 }
-      );
-    }
-
-    let senderUsername = "";
-    let recipientUsername = "";
-
-    await prisma.$transaction(async (tx) => {
-      // Kiểm tra người gửi
-      const sender = await tx.user.findUnique({
-        where: { id: userId },
-        select: { coins: true, username: true },
-      });
-      if (!sender || sender.coins < transferAmount) {
-        throw new Error("Không đủ xu");
-      }
-
-      // Kiểm tra người nhận
-      const recipient = await tx.user.findUnique({
-        where: { id: recipientId },
-        select: { username: true, coins: true },
-      });
-      if (!recipient) {
-        throw new Error("Người nhận không tồn tại");
-      }
-
-      // Trừ xu người gửi
-      await tx.user.update({
-        where: { id: userId },
-        data: { coins: { decrement: transferAmount } },
-      });
-
-      // Cộng xu người nhận
-      await tx.user.update({
-        where: { id: recipientId },
-        data: { coins: { increment: transferAmount } },
-      });
-
-      // Ghi lịch sử giao dịch cho người gửi
-      await tx.transaction.create({
-        data: {
-          userId,
-          type: "TRANSFER_OUT",
-          amount: -transferAmount,
-          toUserId: recipientId,
-          description: `Chuyển ${transferAmount.toLocaleString()} xu cho ${recipientUsername}`,
-        },
-      });
-
-      // Ghi lịch sử giao dịch cho người nhận
-      await tx.transaction.create({
-        data: {
-          userId: recipientId,
-          type: "TRANSFER_IN",
-          amount: transferAmount,
-          fromUserId: userId,
-          description: `Nhận ${transferAmount.toLocaleString()} xu từ ${senderUsername}`,
-        },
-      });
-    });
-
-    // Lấy lại số xu mới của người gửi
-    const updatedSender = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { coins: true },
-    });
-
-    return NextResponse.json({
-      success: true,
-      coins: updatedSender?.coins ?? 0,
-      message: `Đã chuyển ${transferAmount.toLocaleString()} xu thành công!`,
-    });
+// ================== CHUYỂN XU (TRANSFER) ==================
+if (action === "transfer") {
+  if (!toUserId || !amount || Number(amount) <= 0) {
+    return NextResponse.json(
+      { error: "Thiếu hoặc số xu không hợp lệ" },
+      { status: 400 }
+    );
   }
+
+  const recipientId = Number(toUserId);
+  const transferAmount = Number(amount);
+
+  if (recipientId === userId) {
+    return NextResponse.json(
+      { error: "Không thể chuyển cho chính mình" },
+      { status: 400 }
+    );
+  }
+
+  // Lấy dữ liệu ra ngoài transaction (nhanh hơn rất nhiều)
+  const [sender, recipient] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { coins: true, username: true },
+    }),
+    prisma.user.findUnique({
+      where: { id: recipientId },
+      select: { coins: true, username: true },
+    }),
+  ]);
+
+  if (!sender || sender.coins < transferAmount) {
+    return NextResponse.json({ error: "Không đủ xu" }, { status: 400 });
+  }
+  if (!recipient) {
+    return NextResponse.json(
+      { error: "Người nhận không tồn tại" },
+      { status: 400 }
+    );
+  }
+
+  // Batch Transaction (NHANH, KHÔNG TIMEOUT)
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: userId },
+      data: { coins: { decrement: transferAmount } },
+    }),
+
+    prisma.user.update({
+      where: { id: recipientId },
+      data: { coins: { increment: transferAmount } },
+    }),
+
+    prisma.transaction.create({
+      data: {
+        userId,
+        type: "TRANSFER_OUT",
+        amount: -transferAmount,
+        toUserId: recipientId,
+        description: `Chuyển ${transferAmount.toLocaleString()} xu cho ${recipient.username}`,
+      },
+    }),
+
+    prisma.transaction.create({
+      data: {
+        userId: recipientId,
+        type: "TRANSFER_IN",
+        amount: transferAmount,
+        fromUserId: userId,
+        description: `Nhận ${transferAmount.toLocaleString()} xu từ ${sender.username}`,
+      },
+    }),
+  ]);
+
+  const updatedSender = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { coins: true },
+  });
+
+  return NextResponse.json({
+    success: true,
+    coins: updatedSender?.coins ?? 0,
+    message: `Đã chuyển ${transferAmount.toLocaleString()} xu thành công!`,
+  });
+}
+
 
   // ================== ACTION KHÔNG HỢP LỆ ==================
   return NextResponse.json(
